@@ -1,4 +1,6 @@
+import { useState } from "react";
 import styled from "styled-components";
+import { FormItem, FormItemGroupName } from "../components/FormItem";
 
 const Layout = styled.div`
   width: 100%;
@@ -10,7 +12,9 @@ const Layout = styled.div`
 
 const Card = styled.div`
   padding: 16px;
-  margin-right: 24px;
+  padding-top: 12px;
+  margin-left: 12px;
+  margin-right: 12px;
   margin-bottom: 24px;
   width: 360px;
   border-radius: 8px;
@@ -18,82 +22,68 @@ const Card = styled.div`
   box-shadow: ${(props) => (props.selected ? " 0px 0px 8px 2px rgba(255, 255, 255, 0.25);" : "none")};
 `;
 
-const H2 = styled.h2`
-  color: rgba(255, 255, 255, 0.2);
-  margin-bottom: 4px;
-`;
-
-const FormItem = styled.div`
-  display: flex;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const Input = styled.input`
-  margin-right: 16px;
-  border: ${(props) => (props.mode === "edit" ? "1px solid rgba(255, 255, 255, 0.1)" : "none")};
-  border-radius: 4px;
-  padding: 2px 8px 4px;
-`;
-
-const InputAddress = styled(Input)`
-  width: 72px;
-  color: rgba(255, 255, 255, 1);
-  font-size: 14px;
-  background-color: transparent;
-`;
-
-const InputPass = styled(Input)`
-  flex-grow: 1;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-  background-color: transparent;
-`;
-const Tools = styled.div`
-  flex-grow: 1;
-  flex-shrink: 0;
-  display: flex;
-  justify-content: flex-end;
-  border-left: 1px solid #ffffff;
-`;
-
-const ToolBtn = styled.button`
-  color: ${(props) => (props.color === "danger" ? "rgba(229, 127, 127, 1)" : props.color === "confirm" ? "#6AF190" : "#ffffff")};
-  font-size: 12px;
-  margin-left: 12px;
-`;
+const data = [
+  {
+    id: 1,
+    group_name: "A_group",
+    fields: [
+      { id: 1, name: "A_item_1", password: "A_pass_1" },
+      { id: 2, name: "A_item_2", password: "A_pass_2" },
+      { id: 3, name: "A_item_3", password: "A_pass_3" },
+    ],
+  },
+  {
+    id: 2,
+    group_name: "B_group",
+    fields: [
+      { id: 4, name: "B_item_1", password: "B_pass_1" },
+      { id: 5, name: "B_item_2", password: "B_pass_2" },
+      { id: 6, name: "B_item_3", password: "B_pass_3" },
+    ],
+  },
+  {
+    id: 3,
+    group_name: "C_group",
+    fields: [
+      { id: 7, name: "C_item_1", password: "C_pass_1" },
+      { id: 8, name: "C_item_2", password: "C_pass_2" },
+      { id: 9, name: "C_item_3", password: "C_pass_3" },
+    ],
+  },
+];
 
 function Account() {
+  const [safety, setSafety] = useState(data);
+
+  function setGroup({ id, name }) {
+    setSafety((prev) => {
+      const i = prev.findIndex((el) => el.id === id);
+      prev[i].group_name = name;
+      return prev;
+    });
+  }
+
+  function setField({ id_group, id, name, password }) {
+    setSafety((prev) => {
+      const i = prev.findIndex((el) => el.id === id_group);
+      const j = prev[i].fields.findIndex((el) => el.id === id);
+      prev[i].fields[j].name = name;
+      prev[i].fields[j].password = password;
+      return prev;
+    });
+  }
+
   return (
     <div className="account">
       <Layout>
-        {[0, 1, 0].map((el, i) => {
+        {safety.map((el) => {
           return (
-            <Card selected={el} key={i}>
-              <H2>Group Name</H2>
-              <FormItem>
-                <InputAddress defaultValue="address" />
-                <InputPass defaultValue="password" />
-              </FormItem>
-              <FormItem>
-                <InputAddress defaultValue="address" />
-                <InputPass defaultValue="password" />
-                <Tools>
-                  <ToolBtn>Edit</ToolBtn>
-                  <ToolBtn color="danger">Delete</ToolBtn>
-                </Tools>
-              </FormItem>
-              <FormItem>
-                <InputAddress mode="edit" canEdit defaultValue="address" />
-                <InputPass mode="edit" canEdit defaultValue="password" />
-                <Tools>
-                  <ToolBtn color="confirm">Add</ToolBtn>
-                </Tools>
-              </FormItem>
+            <Card selected={el.id === 1} key={el.id}>
+              <FormItemGroupName id={el.id} name={el.group_name} setGroup={setGroup}></FormItemGroupName>
+              {el.fields.map((f) => {
+                return <FormItem id_group={el.id} id={f.id} name={f.name} password={f.password} key={f.id} setField={setField} />;
+              })}
+              <FormItem statusForce="add" />
             </Card>
           );
         })}
