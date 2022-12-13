@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 
 const Item = styled.div`
@@ -93,8 +93,8 @@ const ToolBtn = styled.button`
   }}
 `;
 
-function FormItem(props) {
-  const { id_group, id, name, password, statusForce, setField } = props;
+const FormItem = React.memo((props) => {
+  const { id_group, id, name = "", password = "", statusForce, setItem, addItem, removeItem } = props;
   const [status, setStatus] = useState(statusForce || "normal");
 
   const [itemName, setItemName] = useState(name);
@@ -128,7 +128,7 @@ function FormItem(props) {
         <ToolBtn active={status === "focus"} onClick={() => setStatus("edit")}>
           Edit
         </ToolBtn>
-        <ToolBtn active={status === "focus"} color="danger">
+        <ToolBtn active={status === "focus"} color="danger" onClick={() => removeItem({ id_group, id })}>
           Delete
         </ToolBtn>
         <ToolBtn
@@ -136,23 +136,40 @@ function FormItem(props) {
           color="confirm"
           onClick={() => {
             setStatus("normal");
-            setField({ id_group, id, name: itemName, password: itemPassword });
+            setItem({ id_group, id, name: itemName, password: itemPassword });
           }}
         >
           OK
         </ToolBtn>
-        <ToolBtn active={status === "edit"} color="danger" onClick={() => setStatus("normal")}>
+        <ToolBtn
+          active={status === "edit"}
+          color="danger"
+          onClick={() => {
+            setStatus("normal");
+            setItemName(name);
+            setItemPassword(password);
+          }}
+        >
           Cancel
         </ToolBtn>
-        <ToolBtn active={status === "add"} color="confirm">
+        <ToolBtn
+          active={status === "add"}
+          color="confirm"
+          onClick={() => {
+            if (itemName.length < 1 || itemPassword.length < 1) return;
+            addItem({ id_group: 1, id: 99, name: itemName, password: itemPassword });
+            setItemName("");
+            setItemPassword("");
+          }}
+        >
           Add
         </ToolBtn>
       </Tools>
     </Item>
   );
-}
+});
 
-function FormItemGroupName(props) {
+const FormItemGroupName = React.memo((props) => {
   const { id, name, setGroup } = props;
   const [status, setStatus] = useState("normal");
 
@@ -191,15 +208,18 @@ function FormItemGroupName(props) {
         >
           OK
         </ToolBtn>
-        <ToolBtn active={status === "edit"} color="danger" onClick={() => setStatus("normal")}>
+        <ToolBtn
+          active={status === "edit"}
+          color="danger"
+          onClick={() => {
+            setStatus("normal");
+            setGroupName(name);
+          }}
+        >
           Cancel
-        </ToolBtn>
-        <ToolBtn active={status === "add"} color="confirm">
-          Add
         </ToolBtn>
       </Tools>
     </ItemGroupName>
   );
-}
-
+});
 export { FormItemGroupName, FormItem };
