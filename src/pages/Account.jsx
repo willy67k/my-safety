@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { FormItem, FormItemGroupName } from "../components/FormItem";
+import Modal from "../components/Modal";
 
 const Layout = styled.div`
   width: 100%;
@@ -28,6 +29,9 @@ function Account() {
   const activeItem = useRef(null);
   const itemSetStatus = useRef({ isUpdate: null, old: null, new: null });
 
+  const [modalActive, setModalActive] = useState(false);
+  const modalDetail = useRef({ message: "", confirmType: "confirm", cancelType: "danger", confirm: () => {}, cancel: () => {} });
+
   // demo func
 
   function setGroup({ id, name }) {
@@ -35,6 +39,26 @@ function Account() {
       let newState = [...prev];
       const i = newState.findIndex((el) => el.id === id);
       newState[i].group_name = name;
+      return newState;
+    });
+  }
+
+  function readyToRemoveGroup({ id }) {
+    setModalActive(true);
+
+    modalDetail.current = {
+      message: 'Are you sure to Delete "Group" ?',
+      confirmType: "danger",
+      confirm: () => {
+        removeGroup({ id });
+      },
+    };
+  }
+
+  function removeGroup({ id }) {
+    setSafety((prev) => {
+      let newState = [...prev];
+      newState = newState.filter((el) => el.id !== id);
       return newState;
     });
   }
@@ -57,6 +81,18 @@ function Account() {
       newState[i].items.push({ id, name, password });
       return newState;
     });
+  }
+
+  function readyToRemoveItem({ id_group, id }) {
+    setModalActive(true);
+
+    modalDetail.current = {
+      message: 'Are you sure to Delete "item" ?',
+      confirmType: "danger",
+      confirm: () => {
+        removeItem({ id_group, id });
+      },
+    };
   }
 
   function removeItem({ id_group, id }) {
@@ -108,7 +144,13 @@ function Account() {
         {safety.map((el) => {
           return (
             <Card selected={el.id === 1} key={el.id}>
-              <FormItemGroupName id={el.id} name={el.group_name} setGroup={setGroup} setItemSetStatus={setItemSetStatus}></FormItemGroupName>
+              <FormItemGroupName
+                id={el.id}
+                name={el.group_name}
+                setGroup={setGroup}
+                setItemSetStatus={setItemSetStatus}
+                readyToRemoveGroup={readyToRemoveGroup}
+              ></FormItemGroupName>
               {el.items.map((f) => {
                 return (
                   <FormItem
@@ -118,7 +160,7 @@ function Account() {
                     password={f.password}
                     key={f.id}
                     setItem={setItem}
-                    removeItem={removeItem}
+                    readyToRemoveItem={readyToRemoveItem}
                     setItemSetStatus={setItemSetStatus}
                   />
                 );
@@ -128,6 +170,7 @@ function Account() {
           );
         })}
       </Layout>
+      {modalActive && <Modal setModalActive={setModalActive} detail={modalDetail.current} />}
     </div>
   );
 }

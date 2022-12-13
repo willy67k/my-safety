@@ -94,7 +94,7 @@ const ToolBtn = styled.button`
 `;
 
 const FormItem = React.memo((props) => {
-  const { id_group, id, name = "", password = "", statusForce, setItem, addItem, removeItem, setItemSetStatus } = props;
+  const { id_group, id, name = "", password = "", statusForce, setItem, addItem, readyToRemoveItem, setItemSetStatus } = props;
   const [status, setStatus] = useState(statusForce || "normal");
 
   const [itemName, setItemName] = useState(name);
@@ -130,7 +130,7 @@ const FormItem = React.memo((props) => {
         <ToolBtn active={status === "focus"} onClick={() => setStatus("edit")}>
           Edit
         </ToolBtn>
-        <ToolBtn active={status === "focus"} color="danger" onClick={() => removeItem({ id_group, id })}>
+        <ToolBtn active={status === "focus"} color="danger" onClick={() => readyToRemoveItem({ id_group, id })}>
           Delete
         </ToolBtn>
         <ToolBtn
@@ -172,7 +172,7 @@ const FormItem = React.memo((props) => {
 });
 
 const FormItemGroupName = React.memo((props) => {
-  const { id, name, setGroup, setItemSetStatus } = props;
+  const { id, name, setGroup, setItemSetStatus, readyToRemoveGroup } = props;
   const [status, setStatus] = useState("normal");
 
   const [groupName, setGroupName] = useState(name);
@@ -199,7 +199,13 @@ const FormItemGroupName = React.memo((props) => {
         <ToolBtn active={status === "focus"} onClick={() => setStatus("edit")}>
           Edit
         </ToolBtn>
-        <ToolBtn active={status === "focus"} color="danger">
+        <ToolBtn
+          active={status === "focus"}
+          color="danger"
+          onClick={() => {
+            readyToRemoveGroup({ id });
+          }}
+        >
           Delete
         </ToolBtn>
         <ToolBtn
