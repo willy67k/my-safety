@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { FormItem, FormItemGroupName } from "../components/FormItem";
 
@@ -24,6 +24,9 @@ const Card = styled.div`
 
 function Account() {
   const [safety, setSafety] = useState([]);
+
+  const activeItem = useRef(null);
+  const itemSetStatus = useRef({ isUpdate: null, old: null, new: null });
 
   // demo func
 
@@ -65,6 +68,10 @@ function Account() {
     });
   }
 
+  function setItemSetStatus(method = itemSetStatus.current.old) {
+    itemSetStatus.current = { ...itemSetStatus.current, isUpdate: true, new: method };
+  }
+
   useEffect(() => {
     async function fetchApi() {
       try {
@@ -79,6 +86,20 @@ function Account() {
       }
     }
     fetchApi();
+
+    window.addEventListener("click", (e) => {
+      const target = e.target.closest("[data-target=form-item]");
+
+      if (activeItem.current !== null && target !== activeItem.current) {
+        itemSetStatus.current.old && itemSetStatus.current.old("normal");
+      }
+
+      if (itemSetStatus.current.isUpdate) {
+        itemSetStatus.current.old = itemSetStatus.current.new;
+        itemSetStatus.current.isUpdate = false;
+        activeItem.current = target;
+      }
+    });
   }, []);
 
   return (
@@ -87,9 +108,20 @@ function Account() {
         {safety.map((el) => {
           return (
             <Card selected={el.id === 1} key={el.id}>
-              <FormItemGroupName id={el.id} name={el.group_name} setGroup={setGroup}></FormItemGroupName>
+              <FormItemGroupName id={el.id} name={el.group_name} setGroup={setGroup} setItemSetStatus={setItemSetStatus}></FormItemGroupName>
               {el.items.map((f) => {
-                return <FormItem id_group={el.id} id={f.id} name={f.name} password={f.password} key={f.id} setItem={setItem} removeItem={removeItem} />;
+                return (
+                  <FormItem
+                    id_group={el.id}
+                    id={f.id}
+                    name={f.name}
+                    password={f.password}
+                    key={f.id}
+                    setItem={setItem}
+                    removeItem={removeItem}
+                    setItemSetStatus={setItemSetStatus}
+                  />
+                );
               })}
               <FormItem statusForce="add" addItem={addItem} />
             </Card>

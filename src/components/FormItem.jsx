@@ -94,7 +94,7 @@ const ToolBtn = styled.button`
 `;
 
 const FormItem = React.memo((props) => {
-  const { id_group, id, name = "", password = "", statusForce, setItem, addItem, removeItem } = props;
+  const { id_group, id, name = "", password = "", statusForce, setItem, addItem, removeItem, setItemSetStatus } = props;
   const [status, setStatus] = useState(statusForce || "normal");
 
   const [itemName, setItemName] = useState(name);
@@ -102,9 +102,11 @@ const FormItem = React.memo((props) => {
 
   return (
     <Item
+      data-target="form-item"
       onClick={() => {
         if (status === "normal") {
           setStatus("focus");
+          setItemSetStatus(setStatus);
         }
       }}
     >
@@ -170,16 +172,18 @@ const FormItem = React.memo((props) => {
 });
 
 const FormItemGroupName = React.memo((props) => {
-  const { id, name, setGroup } = props;
+  const { id, name, setGroup, setItemSetStatus } = props;
   const [status, setStatus] = useState("normal");
 
   const [groupName, setGroupName] = useState(name);
 
   return (
     <ItemGroupName
+      data-target="form-item"
       onClick={() => {
         if (status === "normal") {
           setStatus("focus");
+          setItemSetStatus(setStatus);
         }
       }}
     >
