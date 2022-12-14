@@ -159,7 +159,7 @@ const FormItem = React.memo((props) => {
           color="confirm"
           onClick={() => {
             if (itemName.length < 1 || itemPassword.length < 1) return;
-            addItem({ id_group: 1, id: 99, name: itemName, password: itemPassword });
+            addItem({ id_group, name: itemName, password: itemPassword });
             setItemName("");
             setItemPassword("");
           }}

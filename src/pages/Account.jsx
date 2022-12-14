@@ -1,7 +1,9 @@
+import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { FormItem, FormItemGroupName } from "../components/FormItem";
 import Modal from "../components/Modal";
+import Api from "../resource/api";
 
 const Layout = styled.div`
   width: 100%;
@@ -74,13 +76,20 @@ function Account() {
     });
   }
 
-  function addItem({ id_group, id, name, password }) {
-    setSafety((prev) => {
-      let newState = [...prev];
-      const i = newState.findIndex((el) => el.id === id_group);
-      newState[i].items.push({ id, name, password });
-      return newState;
-    });
+  async function addItem({ id_group, name, password }) {
+    const CCtoken = axios.CancelToken.source();
+    try {
+      const { data } = await Api.addItem({ id_group, name, password }, CCtoken.token);
+      setSafety((prev) => {
+        let newState = [...prev];
+        const i = newState.findIndex((el) => el.id === id_group);
+        newState[i].items.push({ id: data.id, name: data.name, password: data.password });
+        return newState;
+      });
+    } catch (err) {
+      console.log(err);
+    }
+    return;
   }
 
   function readyToRemoveItem({ id_group, id }) {
@@ -109,19 +118,16 @@ function Account() {
   }
 
   useEffect(() => {
-    async function fetchApi() {
-      try {
-        const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/safety-grouping-items`);
-        const data = await res.json();
-        setTimeout(() => {
-          console.log(data);
-          setSafety(data);
-        }, 1500);
-      } catch (err) {
+    const CCtoken = axios.CancelToken.source();
+    Api.getSafeties(CCtoken.token)
+      .then((res) => {
+        const { data } = res;
+        setSafety(data);
+      })
+      .catch((err) => {
+        if (process.env.NODE_ENV !== "development" && err.name === "CanceledError") return;
         console.log(err);
-      }
-    }
-    fetchApi();
+      });
 
     window.addEventListener("click", (e) => {
       const target = e.target.closest("[data-target=form-item]");
@@ -136,6 +142,10 @@ function Account() {
         activeItem.current = target;
       }
     });
+
+    return () => {
+      CCtoken.cancel();
+    };
   }, []);
 
   return (
@@ -165,7 +175,7 @@ function Account() {
                   />
                 );
               })}
-              <FormItem statusForce="add" addItem={addItem} />
+              <FormItem id_group={el.id} statusForce="add" addItem={addItem} />
             </Card>
           );
         })}
