@@ -81,6 +81,23 @@ function Account() {
     return;
   }
 
+  async function setItem({ id, name, password }) {
+    const CCtoken = axios.CancelToken.source();
+    try {
+      const { data } = await Api.setItem(id, { name, password }, CCtoken.token);
+      setSafety((prev) => {
+        let newState = [...prev];
+        const i = newState.findIndex((el) => el.id === data.safety_group_id);
+        const j = newState[i].items.findIndex((el) => el.id === data.id);
+        newState[i].items[j].name = data.name;
+        newState[i].items[j].password = data.password;
+        return newState;
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   function readyToRemoveItem({ id_group, id }) {
     setModalActive(true);
 

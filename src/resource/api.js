@@ -11,6 +11,10 @@ class API {
     return await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/safety-item`, { data, cancelToken });
   }
 
+  async setItem(id, data, cancelToken) {
+    return await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/safety-item/${id}`, { data, cancelToken });
+  }
+
   async removeItem(data, cancelToken) {
     return await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/safety-item`, { data, cancelToken });
   }

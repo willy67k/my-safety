@@ -138,7 +138,7 @@ const FormItem = React.memo((props) => {
           color="confirm"
           onClick={() => {
             setStatus("normal");
-            setItem({ id_group, id, name: itemName, password: itemPassword });
+            setItem({ id, name: itemName, password: itemPassword });
           }}
         >
           OK
