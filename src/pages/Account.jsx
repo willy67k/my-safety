@@ -65,24 +65,13 @@ function Account() {
     });
   }
 
-  function setItem({ id_group, id, name, password }) {
-    setSafety((prev) => {
-      let newState = [...prev];
-      const i = newState.findIndex((el) => el.id === id_group);
-      const j = newState[i].items.findIndex((el) => el.id === id);
-      newState[i].items[j].name = name;
-      newState[i].items[j].password = password;
-      return newState;
-    });
-  }
-
   async function addItem({ id_group, name, password }) {
     const CCtoken = axios.CancelToken.source();
     try {
       const { data } = await Api.addItem({ id_group, name, password }, CCtoken.token);
       setSafety((prev) => {
         let newState = [...prev];
-        const i = newState.findIndex((el) => el.id === id_group);
+        const i = newState.findIndex((el) => el.id === data.safety_group_id);
         newState[i].items.push({ id: data.id, name: data.name, password: data.password });
         return newState;
       });
