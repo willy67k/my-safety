@@ -104,13 +104,19 @@ function Account() {
     };
   }
 
-  function removeItem({ id_group, id }) {
-    setSafety((prev) => {
-      let newState = [...prev];
-      const i = newState.findIndex((el) => el.id === id_group);
-      newState[i].items = newState[i].items.filter((item) => item.id !== id);
-      return newState;
-    });
+  async function removeItem({ id }) {
+    const CCtoken = axios.CancelToken.source();
+    try {
+      const { data } = await Api.removeItem({ id }, CCtoken.token);
+      setSafety((prev) => {
+        let newState = [...prev];
+        const i = newState.findIndex((el) => el.id === data.safety_group_id);
+        newState[i].items = newState[i].items.filter((item) => item.id !== data.id);
+        return newState;
+      });
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   function setItemSetStatus(method = itemSetStatus.current.old) {

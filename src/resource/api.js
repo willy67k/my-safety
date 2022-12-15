@@ -10,6 +10,10 @@ class API {
   async addItem(data, cancelToken) {
     return await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/safety-item`, { data, cancelToken });
   }
+
+  async removeItem(data, cancelToken) {
+    return await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/safety-item`, { data, cancelToken });
+  }
 }
 
 const Api = new API();
