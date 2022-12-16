@@ -36,13 +36,19 @@ function Account() {
 
   // demo func
 
-  function setGroup({ id, name }) {
-    setSafety((prev) => {
-      let newState = [...prev];
-      const i = newState.findIndex((el) => el.id === id);
-      newState[i].group_name = name;
-      return newState;
-    });
+  async function setGroup({ id, name }) {
+    const CCtoken = axios.CancelToken.source();
+    try {
+      const { data } = await Api.setGroup(id, { name }, CCtoken.token);
+      setSafety((prev) => {
+        let newState = [...prev];
+        const i = newState.findIndex((el) => el.id === data.id);
+        newState[i].group_name = data.name;
+        return newState;
+      });
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   function readyToRemoveGroup({ id }) {
