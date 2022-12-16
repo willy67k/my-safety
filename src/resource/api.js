@@ -7,6 +7,10 @@ class API {
     return await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/safety-grouping-items`, { cancelToken });
   }
 
+  async addGroup(cancelToken) {
+    return await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/safety-group`, { cancelToken });
+  }
+
   async setGroup(id, data, cancelToken) {
     return await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/safety-group/${id}`, { data, cancelToken });
   }
