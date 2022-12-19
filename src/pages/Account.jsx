@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { FormItem, FormItemGroupName } from "../components/FormItem";
 import Modal from "../components/Modal";
@@ -8,6 +8,7 @@ import Api from "../resource/api";
 const Layout = styled.div`
   width: 100%;
   display: flex;
+  justify-content: center;
   flex-wrap: wrap;
   max-width: 1600px;
   padding: 40px 24px;
@@ -38,9 +39,15 @@ const CardNew = styled(Card)`
   cursor: pointer;
 `;
 
+const CardFixed = styled(Card)`
+  opacity: 0;
+  pointer-events: none;
+`;
+
 function Account() {
   const [safety, setSafety] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [fixedCardtotal, setfixedCardtotal] = useState(0);
 
   const activeItem = useRef(null);
   const itemSetStatus = useRef({ isUpdate: null, old: null, new: null });
@@ -190,6 +197,23 @@ function Account() {
     !target && setSelectedCard(null);
   }
 
+  const fixCardPosition = useCallback(() => {
+    if (window.innerWidth < 1200) return setfixedCardtotal(0);
+    const length = safety.length + 1;
+    switch (length % 3) {
+      case 0:
+        break;
+      case 1:
+        setfixedCardtotal(2);
+        break;
+      case 2:
+        setfixedCardtotal(1);
+        break;
+      default:
+        break;
+    }
+  }, [safety.length]);
+
   useEffect(() => {
     const CCtoken = axios.CancelToken.source();
     Api.getSafeties(CCtoken.token)
@@ -205,12 +229,14 @@ function Account() {
     window.addEventListener("click", cardSelectedHandler);
     window.addEventListener("click", itemActiveHandler);
 
+    fixCardPosition();
+
     return () => {
       CCtoken.cancel();
       window.removeEventListener("click", cardSelectedHandler);
       window.removeEventListener("click", itemActiveHandler);
     };
-  }, []);
+  }, [fixCardPosition]);
 
   return (
     <div className="account">
@@ -252,6 +278,11 @@ function Account() {
             />
           </svg>
         </CardNew>
+        {Array(fixedCardtotal)
+          .fill(true)
+          .map((el, i) => (
+            <CardFixed key={i}></CardFixed>
+          ))}
       </Layout>
       {modalActive && <Modal setModalActive={setModalActive} detail={modalDetail.current} />}
     </div>
