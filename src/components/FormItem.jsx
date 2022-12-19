@@ -100,13 +100,18 @@ const FormItem = React.memo((props) => {
   const [itemName, setItemName] = useState(name);
   const [itemPassword, setItemPassword] = useState(password);
 
+  function cancelEdit() {
+    setItemName(name);
+    setItemPassword(password);
+  }
+
   return (
     <Item
       data-target="form-item"
       onClick={() => {
         if (status === "normal") {
           setStatus("focus");
-          setItemSetStatus(setStatus);
+          setItemSetStatus({ setStatus, cancelEdit });
         }
       }}
     >
@@ -148,8 +153,7 @@ const FormItem = React.memo((props) => {
           color="danger"
           onClick={() => {
             setStatus("normal");
-            setItemName(name);
-            setItemPassword(password);
+            cancelEdit();
           }}
         >
           Cancel
@@ -177,13 +181,17 @@ const FormItemGroupName = React.memo((props) => {
 
   const [groupName, setGroupName] = useState(name);
 
+  function cancelEdit() {
+    setGroupName(name);
+  }
+
   return (
     <ItemGroupName
       data-target="form-item"
       onClick={() => {
         if (status === "normal") {
           setStatus("focus");
-          setItemSetStatus(setStatus);
+          setItemSetStatus({ setStatus, cancelEdit });
         }
       }}
     >
@@ -223,7 +231,7 @@ const FormItemGroupName = React.memo((props) => {
           color="danger"
           onClick={() => {
             setStatus("normal");
-            setGroupName(name);
+            cancelEdit();
           }}
         >
           Cancel

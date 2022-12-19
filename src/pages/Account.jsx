@@ -158,8 +158,23 @@ function Account() {
     }
   }
 
-  function setItemSetStatus(method = itemSetStatus.current.old) {
-    itemSetStatus.current = { ...itemSetStatus.current, isUpdate: true, new: method };
+  function setItemSetStatus(methods = { setStatus: itemSetStatus.current.old }) {
+    itemSetStatus.current = { ...itemSetStatus.current, isUpdate: true, new: methods.setStatus, cancelEdit: methods.cancelEdit };
+  }
+
+  function itemActiveHandler(e) {
+    const target = e.target.closest("[data-target=form-item]");
+
+    if (activeItem.current !== null && target !== activeItem.current) {
+      itemSetStatus.current.old("normal");
+      itemSetStatus.current.cancelEdit();
+    }
+
+    if (itemSetStatus.current.isUpdate) {
+      itemSetStatus.current.old = itemSetStatus.current.new;
+      itemSetStatus.current.isUpdate = false;
+      activeItem.current = target;
+    }
   }
 
   useEffect(() => {
@@ -174,22 +189,11 @@ function Account() {
         console.log(err);
       });
 
-    window.addEventListener("click", (e) => {
-      const target = e.target.closest("[data-target=form-item]");
-
-      if (activeItem.current !== null && target !== activeItem.current) {
-        itemSetStatus.current.old && itemSetStatus.current.old("normal");
-      }
-
-      if (itemSetStatus.current.isUpdate) {
-        itemSetStatus.current.old = itemSetStatus.current.new;
-        itemSetStatus.current.isUpdate = false;
-        activeItem.current = target;
-      }
-    });
+    window.addEventListener("click", itemActiveHandler);
 
     return () => {
       CCtoken.cancel();
+      window.removeEventListener("click", itemActiveHandler);
     };
   }, []);
 
