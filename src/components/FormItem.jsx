@@ -144,6 +144,7 @@ const FormItem = React.memo((props) => {
           onClick={() => {
             setStatus("normal");
             setItem({ id, name: itemName, password: itemPassword });
+            setItemSetStatus({ cancelEdit: () => {} });
           }}
         >
           OK
@@ -222,6 +223,7 @@ const FormItemGroupName = React.memo((props) => {
           onClick={() => {
             setStatus("normal");
             setGroup({ id, name: groupName });
+            setItemSetStatus({ cancelEdit: () => {} });
           }}
         >
           OK

@@ -50,7 +50,7 @@ function Account() {
   const [fixedCardtotal, setfixedCardtotal] = useState(0);
 
   const activeItem = useRef(null);
-  const itemSetStatus = useRef({ isUpdate: null, old: null, new: null });
+  const itemSetStatus = useRef({ isUpdate: null, old: null, new: null, cancelEdit: null });
 
   const [modalActive, setModalActive] = useState(false);
   const modalDetail = useRef({ message: "", confirmType: "confirm", cancelType: "danger", confirm: () => {}, cancel: () => {} });
@@ -181,7 +181,7 @@ function Account() {
     const target = e.target.closest("[data-target=form-item]");
 
     if (activeItem.current !== null && target !== activeItem.current) {
-      itemSetStatus.current.old("normal");
+      itemSetStatus.current.old && itemSetStatus.current.old("normal");
       itemSetStatus.current.cancelEdit();
     }
 
