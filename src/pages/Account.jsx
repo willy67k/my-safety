@@ -90,12 +90,18 @@ function Account() {
     };
   }
 
-  function removeGroup({ id }) {
-    setSafety((prev) => {
-      let newState = [...prev];
-      newState = newState.filter((el) => el.id !== id);
-      return newState;
-    });
+  async function removeGroup({ id }) {
+    const CCtoken = axios.CancelToken.source();
+    try {
+      const { data } = await Api.removeGroup(id, CCtoken.token);
+      setSafety((prev) => {
+        let newState = [...prev];
+        newState = newState.filter((el) => el.id !== data.id);
+        return newState;
+      });
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async function addItem({ id_group, name, password }) {
@@ -146,7 +152,7 @@ function Account() {
   async function removeItem({ id }) {
     const CCtoken = axios.CancelToken.source();
     try {
-      const { data } = await Api.removeItem({ id }, CCtoken.token);
+      const { data } = await Api.removeItem(id, CCtoken.token);
       setSafety((prev) => {
         let newState = [...prev];
         const i = newState.findIndex((el) => el.id === data.safety_group_id);
