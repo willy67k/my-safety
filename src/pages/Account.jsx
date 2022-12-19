@@ -24,6 +24,7 @@ const Card = styled.div`
   border-radius: 8px;
   background-color: #3b4148;
   box-shadow: ${(props) => (props.selected ? " 0px 0px 8px 2px rgba(255, 255, 255, 0.25);" : "none")};
+  transition: 0.3s;
 `;
 
 const CardNew = styled(Card)`
@@ -39,6 +40,7 @@ const CardNew = styled(Card)`
 
 function Account() {
   const [safety, setSafety] = useState([]);
+  const [selectedCard, setSelectedCard] = useState(null);
 
   const activeItem = useRef(null);
   const itemSetStatus = useRef({ isUpdate: null, old: null, new: null });
@@ -183,6 +185,11 @@ function Account() {
     }
   }
 
+  function cardSelectedHandler(e) {
+    const target = e.target.closest("[data-target=form-card]");
+    !target && setSelectedCard(null);
+  }
+
   useEffect(() => {
     const CCtoken = axios.CancelToken.source();
     Api.getSafeties(CCtoken.token)
@@ -195,10 +202,12 @@ function Account() {
         console.log(err);
       });
 
+    window.addEventListener("click", cardSelectedHandler);
     window.addEventListener("click", itemActiveHandler);
 
     return () => {
       CCtoken.cancel();
+      window.removeEventListener("click", cardSelectedHandler);
       window.removeEventListener("click", itemActiveHandler);
     };
   }, []);
@@ -208,7 +217,7 @@ function Account() {
       <Layout>
         {safety.map((el) => {
           return (
-            <Card selected={el.id === 1} key={el.id}>
+            <Card data-target="form-card" selected={el.id === selectedCard} key={el.id} onClick={() => setSelectedCard(el.id)}>
               <FormItemGroupName
                 id={el.id}
                 name={el.group_name}
