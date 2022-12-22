@@ -1,6 +1,8 @@
+import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import Api from "../resource/api";
 
 const Form = styled.form`
   display: flex;
@@ -49,6 +51,7 @@ const Input = styled.input`
 `;
 
 const Button = styled.button`
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,6 +67,12 @@ const Button = styled.button`
   }
 `;
 
+const MSG = styled.p`
+  height: 24px;
+  color: rgba(229, 127, 127, 1);
+  text-align: right;
+`;
+
 function Home() {
   const form = useRef(null);
   const [values, setValues] = useState({
@@ -71,6 +80,7 @@ function Home() {
     password: "",
   });
   const navigate = useNavigate();
+  const [errorMsg, setErrorMsg] = useState(null);
 
   function setForm(e) {
     setValues((prev) => {
@@ -78,6 +88,19 @@ function Home() {
       newVal[e.target.name] = e.target.value;
       return newVal;
     });
+  }
+
+  async function login({ username, password }) {
+    const CCtoken = axios.CancelToken.source();
+    setErrorMsg(null);
+    try {
+      await Api.login({ username, password }, CCtoken.token);
+      navigate("/account");
+    } catch (err) {
+      setErrorMsg(err.response.data.error);
+      console.log(err);
+    }
+    return;
   }
 
   useEffect(() => {
@@ -90,10 +113,7 @@ function Home() {
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          console.log(values);
-          if (values.username.length !== 0 && values.password.length !== 0) {
-            navigate("/account");
-          }
+          login(values);
         }}
         ref={form}
       >
@@ -130,6 +150,10 @@ function Home() {
 
         <Filed>
           <Button type="submit">SUBMIT</Button>
+        </Filed>
+
+        <Filed>
+          <MSG>{errorMsg}</MSG>
         </Filed>
 
         <svg xmlns="http://www.w3.org/2000/svg" style={{ display: "none" }}>

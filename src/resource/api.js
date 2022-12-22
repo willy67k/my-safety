@@ -1,7 +1,13 @@
 import axios from "axios";
 
 class API {
-  constructor() {}
+  constructor() {
+    axios.defaults.withCredentials = true;
+  }
+
+  async login(data, cancelToken) {
+    return await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/login`, { data, cancelToken });
+  }
 
   async getSafeties(cancelToken) {
     return await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/safety-grouping-items`, { cancelToken });
