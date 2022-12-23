@@ -12,6 +12,10 @@ class API {
     return await this.$axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/login`, { data, cancelToken });
   }
 
+  async logout(cancelToken) {
+    return await this.$axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/logout`, { cancelToken });
+  }
+
   async getSafeties(cancelToken) {
     return await this.$axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/safety-grouping-items`, { cancelToken });
   }
