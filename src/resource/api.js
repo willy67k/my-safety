@@ -40,6 +40,10 @@ class API {
     return await this.$axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/safety-item/${id}`, { data, cancelToken });
   }
 
+  async setItemOrder(id, data, cancelToken) {
+    return await this.$axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/safety-item-order/${id}`, { data, cancelToken });
+  }
+
   async removeItem(id, cancelToken) {
     return await this.$axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/safety-item/${id}`, { cancelToken });
   }

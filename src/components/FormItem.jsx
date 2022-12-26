@@ -1,13 +1,35 @@
 import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
+import DragStatusEnum from "../enum/dragStatus";
+import { setTargetItem, setStatus as setDragStatus } from "../store/slice/dragSlice";
+import DragDots from "./icons/DragDots";
+
+const Order = styled.div`
+  position: absolute;
+  top: 50%;
+  left: -11px;
+  width: 13px;
+  height: 80%;
+  transition: 0.3s;
+  transform: translateY(-50%);
+  opacity: 0;
+  cursor: ${(props) => props.status !== "add" && "grab"};
+`;
 
 const Item = styled.div`
+  position: relative;
   display: flex;
   padding: 8px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  transition: ${(props) => (props.isFlash ? 0 : "0.3s")};
 
   &:last-child {
     border-bottom: none;
+  }
+
+  &:hover ${Order} {
+    opacity: ${(props) => (props.status === "add" ? 0 : 1)};
   }
 `;
 
@@ -100,13 +122,29 @@ const FormItem = React.memo((props) => {
   const [itemName, setItemName] = useState(name);
   const [itemPassword, setItemPassword] = useState(password);
 
+  const dispatch = useDispatch();
+  const dragStatus = useSelector((state) => state.drag.status);
+
   function cancelEdit() {
     setItemName(name);
     setItemPassword(password);
   }
 
+  function setDragData(e) {
+    if (e.target.closest("button")?.getAttribute("color") === "confirm") return;
+
+    e.target.closest("[data-target=form-item]")?.id.includes("add")
+      ? dispatch(setDragStatus(DragStatusEnum.normal))
+      : dispatch(setDragStatus(DragStatusEnum.dragging));
+
+    dispatch(setTargetItem({ id_group, id }));
+  }
+
   return (
     <Item
+      id={`item-${id}`}
+      status={status}
+      isFlash={dragStatus === DragStatusEnum.normal}
       data-target="form-item"
       onClick={() => {
         if (status === "normal") {
@@ -115,6 +153,9 @@ const FormItem = React.memo((props) => {
         }
       }}
     >
+      <Order status={status} onMouseDown={setDragData}>
+        <DragDots />
+      </Order>
       <InputAddress
         active={status === "edit" || status === "add"}
         value={itemName}

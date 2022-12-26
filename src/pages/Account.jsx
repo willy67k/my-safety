@@ -1,8 +1,10 @@
 import axios from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import styled from "styled-components";
 import { FormItem, FormItemGroupName } from "../components/FormItem";
 import Modal from "../components/Modal";
+import useDrag from "../hook/useDrag";
 import Api from "../resource/api";
 
 const Layout = styled.div`
@@ -26,6 +28,11 @@ const Card = styled.div`
   background-color: #3b4148;
   box-shadow: ${(props) => (props.selected ? " 0px 0px 8px 2px rgba(255, 255, 255, 0.25);" : "none")};
   transition: 0.3s;
+
+  &.dragging-group * {
+    user-select: none;
+    cursor: grabbing;
+  }
 `;
 
 const CardNew = styled(Card)`
@@ -54,6 +61,10 @@ function Account() {
 
   const [modalActive, setModalActive] = useState(false);
   const modalDetail = useRef({ message: "", confirmType: "confirm", cancelType: "danger", confirm: () => {}, cancel: () => {} });
+
+  const { startDrag, itemDragging, releaseDrag } = useDrag({ safety, setSafety });
+
+  const dragCardId = useSelector((state) => state.drag.cardId);
 
   // demo func
 
@@ -226,24 +237,46 @@ function Account() {
         console.log(err);
       });
 
-    window.addEventListener("click", cardSelectedHandler);
-    window.addEventListener("click", itemActiveHandler);
-
     fixCardPosition();
 
     return () => {
       CCtoken.cancel();
-      window.removeEventListener("click", cardSelectedHandler);
-      window.removeEventListener("click", itemActiveHandler);
     };
   }, [fixCardPosition]);
+
+  useEffect(() => {
+    window.addEventListener("click", cardSelectedHandler);
+    window.addEventListener("click", itemActiveHandler);
+
+    window.addEventListener("mousedown", startDrag);
+    window.addEventListener("mouseup", releaseDrag);
+    window.addEventListener("mouseleave", releaseDrag);
+    window.addEventListener("mousemove", itemDragging);
+
+    return () => {
+      window.removeEventListener("click", cardSelectedHandler);
+      window.removeEventListener("click", itemActiveHandler);
+
+      window.removeEventListener("mousedown", startDrag);
+      window.removeEventListener("mouseup", releaseDrag);
+      window.removeEventListener("mouseleave", releaseDrag);
+      window.removeEventListener("mousemove", itemDragging);
+    };
+  }, [startDrag, releaseDrag, itemDragging]);
 
   return (
     <div className="account">
       <Layout>
-        {safety.map((el) => {
+        {safety.map((el, key) => {
           return (
-            <Card data-target="form-card" selected={el.id === selectedCard} key={el.id} onClick={() => setSelectedCard(el.id)}>
+            <Card
+              id={`group-${el.id}`}
+              className={dragCardId === el.id ? "dragging-group" : ""}
+              data-target="form-card"
+              selected={el.id === selectedCard}
+              key={el.id}
+              onClick={() => setSelectedCard(el.id)}
+            >
               <FormItemGroupName
                 id={el.id}
                 name={el.group_name}
@@ -265,7 +298,7 @@ function Account() {
                   />
                 );
               })}
-              <FormItem id_group={el.id} statusForce="add" addItem={addItem} />
+              <FormItem id={`add-${key}`} id_group={el.id} statusForce="add" addItem={addItem} />
             </Card>
           );
         })}
