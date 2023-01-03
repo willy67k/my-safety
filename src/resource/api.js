@@ -28,6 +28,10 @@ class API {
     return await this.$axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/safety-group/${id}`, { data, cancelToken });
   }
 
+  async setGroupOrder(data, cancelToken) {
+    return await this.$axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/safety-group-order`, { data, cancelToken });
+  }
+
   async removeGroup(id, cancelToken) {
     return await this.$axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/safety-group/${id}`, { cancelToken });
   }

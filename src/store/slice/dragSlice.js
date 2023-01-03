@@ -3,6 +3,7 @@ import DragStatusEnum from "../../enum/dragStatus";
 
 const initialState = {
   status: DragStatusEnum.normal,
+  type: null,
   cardId: null,
   itemId: null,
 };
@@ -14,6 +15,9 @@ export const dragSlice = createSlice({
     setStatus: (state, { payload }) => {
       state.status = payload;
     },
+    setType: (state, { payload }) => {
+      state.type = payload;
+    },
     setTargetItem: (state, { payload }) => {
       state.cardId = payload.id_group;
       state.itemId = payload.id;
@@ -21,6 +25,6 @@ export const dragSlice = createSlice({
   },
 });
 
-export const { setStatus, setTargetItem } = dragSlice.actions;
+export const { setStatus, setType, setTargetItem } = dragSlice.actions;
 
 export default dragSlice.reducer;

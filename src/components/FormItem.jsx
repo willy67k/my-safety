@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
 import DragStatusEnum from "../enum/dragStatus";
-import { setTargetItem, setStatus as setDragStatus } from "../store/slice/dragSlice";
+import DragTypeEnum from "../enum/dragType";
+import { setTargetItem, setStatus as setDragStatus, setType } from "../store/slice/dragSlice";
 import DragDots from "./icons/DragDots";
 
 const Order = styled.div`
@@ -10,7 +11,6 @@ const Order = styled.div`
   top: 50%;
   left: -11px;
   width: 13px;
-  height: 80%;
   transition: 0.3s;
   transform: translateY(-50%);
   opacity: 0;
@@ -40,7 +40,7 @@ const ItemGroupName = styled(Item)`
 
 const Input = styled.input`
   margin-right: 16px;
-  padding: 2px 8px 4px;
+  padding: 4px 8px 2px;
   background-color: transparent;
   border: 1px solid;
   border-color: ${(props) => (props.active ? "rgba(255, 255, 255, 0.1)" : "transparent")};
@@ -49,6 +49,7 @@ const Input = styled.input`
 `;
 
 const InputGroupName = styled(Input)`
+  padding: 2px 8px 4px;
   color: rgba(255, 255, 255, 0.2);
 `;
 
@@ -132,6 +133,7 @@ const FormItem = React.memo((props) => {
 
   function setDragData(e) {
     if (e.target.closest("button")?.getAttribute("color") === "confirm") return;
+    dispatch(setType(DragTypeEnum.item));
 
     e.target.closest("[data-target=form-item]")?.id.includes("add")
       ? dispatch(setDragStatus(DragStatusEnum.normal))
@@ -221,7 +223,15 @@ const FormItemGroupName = React.memo((props) => {
   const { id, name, setGroup, setItemSetStatus, readyToRemoveGroup } = props;
   const [status, setStatus] = useState("normal");
 
+  const dispatch = useDispatch();
+
   const [groupName, setGroupName] = useState(name);
+
+  function setDragData() {
+    dispatch(setType(DragTypeEnum.group));
+    dispatch(setDragStatus(DragStatusEnum.dragging));
+    dispatch(setTargetItem({ id_group: id }));
+  }
 
   function cancelEdit() {
     setGroupName(name);
@@ -237,6 +247,9 @@ const FormItemGroupName = React.memo((props) => {
         }
       }}
     >
+      <Order status={status} onMouseDown={setDragData}>
+        <DragDots />
+      </Order>
       <InputGroupName
         active={status === "edit"}
         value={groupName}
