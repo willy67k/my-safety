@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import styled from "styled-components";
 import { FormItem, FormItemGroupName } from "../components/FormItem";
 import Modal from "../components/Modal";
+import DragStatusEnum from "../enum/dragStatus";
 import useDrag from "../hook/useDrag";
 import Api from "../resource/api";
 
@@ -27,7 +28,7 @@ const Card = styled.div`
   border-radius: 8px;
   background-color: #3b4148;
   box-shadow: ${(props) => (props.selected ? " 0px 0px 8px 2px rgba(255, 255, 255, 0.25);" : "none")};
-  transition: 0.3s;
+  transition: ${(props) => (props.isFlash ? "0" : "0.3s")};
 
   &.dragging-group * {
     user-select: none;
@@ -62,9 +63,10 @@ function Account() {
   const [modalActive, setModalActive] = useState(false);
   const modalDetail = useRef({ message: "", confirmType: "confirm", cancelType: "danger", confirm: () => {}, cancel: () => {} });
 
-  const { startDrag, itemDragging, releaseDrag } = useDrag({ safety, setSafety });
+  const { dragStartHandler, draggingHandler, releaseDrag } = useDrag({ safety, setSafety });
 
   const dragCardId = useSelector((state) => state.drag.cardId);
+  const dragStatus = useSelector((state) => state.drag.status);
 
   // demo func
 
@@ -248,30 +250,31 @@ function Account() {
     window.addEventListener("click", cardSelectedHandler);
     window.addEventListener("click", itemActiveHandler);
 
-    window.addEventListener("mousedown", startDrag);
+    window.addEventListener("mousedown", dragStartHandler);
+    window.addEventListener("mousemove", draggingHandler);
     window.addEventListener("mouseup", releaseDrag);
     window.addEventListener("mouseleave", releaseDrag);
-    window.addEventListener("mousemove", itemDragging);
 
     return () => {
       window.removeEventListener("click", cardSelectedHandler);
       window.removeEventListener("click", itemActiveHandler);
 
-      window.removeEventListener("mousedown", startDrag);
+      window.removeEventListener("mousedown", dragStartHandler);
+      window.removeEventListener("mousemove", draggingHandler);
       window.removeEventListener("mouseup", releaseDrag);
       window.removeEventListener("mouseleave", releaseDrag);
-      window.removeEventListener("mousemove", itemDragging);
     };
-  }, [startDrag, releaseDrag, itemDragging]);
+  }, [dragStartHandler, releaseDrag, draggingHandler]);
 
   return (
     <div className="account">
-      <Layout>
+      <Layout className="account__layout">
         {safety.map((el, key) => {
           return (
             <Card
               id={`group-${el.id}`}
               className={dragCardId === el.id ? "dragging-group" : ""}
+              isFlash={dragStatus === DragStatusEnum.normal}
               data-target="form-card"
               selected={el.id === selectedCard}
               key={el.id}
