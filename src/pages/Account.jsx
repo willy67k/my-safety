@@ -15,6 +15,7 @@ const Layout = styled.div`
   flex-wrap: wrap;
   max-width: 1600px;
   padding: 40px 24px;
+  margin: auto;
 `;
 
 const Card = styled.div`
