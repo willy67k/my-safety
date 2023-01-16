@@ -1,4 +1,11 @@
+import { Dispatch, SetStateAction } from "react";
 import styled from "styled-components";
+import { ModalDetail } from "../type/modal";
+
+type ModalProps = {
+  setModalActive: Dispatch<SetStateAction<boolean>>;
+  detail: ModalDetail;
+};
 
 const Wrapper = styled.div`
   position: fixed;
@@ -36,7 +43,7 @@ const Button = styled.button`
     padding: 2px 4px;
   `;
 
-function Modal(props) {
+function Modal(props: ModalProps) {
   const { setModalActive, detail } = props;
 
   return (

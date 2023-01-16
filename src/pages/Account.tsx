@@ -5,8 +5,25 @@ import styled from "styled-components";
 import { FormItem, FormItemGroupName } from "../components/FormItem";
 import Modal from "../components/Modal";
 import DragStatusEnum from "../enum/dragStatus";
+import ItemStatusEnum from "../enum/itemStatus";
 import useDrag from "../hook/useDrag";
 import Api from "../resource/api";
+import { RootState } from "../store";
+import { GroupData } from "../type/form";
+import { ModalDetail } from "../type/modal";
+
+type CardProps = {
+  key?: number;
+  selected?: boolean;
+  isFlash?: boolean;
+};
+
+interface ItemStatus {
+  isUpdate: boolean | null;
+  old: Function | null;
+  new: Function | null;
+  cancelEdit: Function | null;
+}
 
 const Layout = styled.div`
   width: 100%;
@@ -18,7 +35,7 @@ const Layout = styled.div`
   margin: auto;
 `;
 
-const Card = styled.div`
+const Card = styled.div<CardProps>`
   padding: 16px;
   padding-top: 12px;
   margin-left: 12px;
@@ -54,20 +71,20 @@ const CardFixed = styled(Card)`
 `;
 
 function Account() {
-  const [safety, setSafety] = useState([]);
-  const [selectedCard, setSelectedCard] = useState(null);
-  const [fixedCardtotal, setfixedCardtotal] = useState(0);
+  const [safety, setSafety] = useState<GroupData[]>([]);
+  const [selectedCard, setSelectedCard] = useState<number | null>(null);
+  const [fixedCardtotal, setfixedCardtotal] = useState<number>(0);
 
-  const activeItem = useRef(null);
-  const itemSetStatus = useRef({ isUpdate: null, old: null, new: null, cancelEdit: null });
+  const activeItem = useRef<Element | null>(null);
+  const itemSetStatus = useRef<ItemStatus>({ isUpdate: null, old: null, new: null, cancelEdit: null });
 
-  const [modalActive, setModalActive] = useState(false);
-  const modalDetail = useRef({ message: "", confirmType: "confirm", cancelType: "danger", confirm: () => {}, cancel: () => {} });
+  const [modalActive, setModalActive] = useState<boolean>(false);
+  const modalDetail = useRef<ModalDetail>({ message: "", confirmType: "confirm", cancelType: "danger", confirm: () => {}, cancel: () => {} });
 
   const { dragStartHandler, draggingHandler, releaseDrag } = useDrag({ safety, setSafety });
 
-  const dragCardId = useSelector((state) => state.drag.cardId);
-  const dragStatus = useSelector((state) => state.drag.status);
+  const dragCardId = useSelector((state: RootState) => state.drag.cardId);
+  const dragStatus = useSelector((state: RootState) => state.drag.status);
 
   // demo func
 
@@ -77,7 +94,7 @@ function Account() {
       const { data } = await Api.addGroup(CCtoken.token);
       setSafety((prev) => {
         let newState = [...prev];
-        newState.push({ id: data.id, group_name: data.name, items: [] });
+        newState.push({ id: data.id, group_name: data.name, items: [], order: data.order, created_on: data.created_on });
         return newState;
       });
     } catch (err) {
@@ -86,7 +103,7 @@ function Account() {
     return;
   }
 
-  async function setGroup({ id, name }) {
+  async function setGroup({ id, name }: { id: number; name: string }) {
     const CCtoken = axios.CancelToken.source();
     try {
       const { data } = await Api.setGroup(id, { name }, CCtoken.token);
@@ -101,10 +118,11 @@ function Account() {
     }
   }
 
-  function readyToRemoveGroup({ id }) {
+  function readyToRemoveGroup({ id }: { id: number }) {
     setModalActive(true);
 
     modalDetail.current = {
+      ...modalDetail.current,
       message: 'Are you sure to Delete "Group" ?',
       confirmType: "danger",
       confirm: () => {
@@ -113,7 +131,7 @@ function Account() {
     };
   }
 
-  async function removeGroup({ id }) {
+  async function removeGroup({ id }: { id: number }) {
     const CCtoken = axios.CancelToken.source();
     try {
       const { data } = await Api.removeGroup(id, CCtoken.token);
@@ -127,14 +145,21 @@ function Account() {
     }
   }
 
-  async function addItem({ id_group, name, password }) {
+  async function addItem({ id_group, name, password }: { id_group: number; name: string; password: string }) {
     const CCtoken = axios.CancelToken.source();
     try {
       const { data } = await Api.addItem({ id_group, name, password }, CCtoken.token);
       setSafety((prev) => {
         let newState = [...prev];
         const i = newState.findIndex((el) => el.id === data.safety_group_id);
-        newState[i].items.push({ id: data.id, name: data.name, password: data.password });
+        newState[i].items.push({
+          id: data.id,
+          safety_group_id: data.safety_group_id,
+          name: data.name,
+          password: data.password,
+          order: data.order,
+          created_on: data.created_on,
+        });
         return newState;
       });
     } catch (err) {
@@ -143,7 +168,7 @@ function Account() {
     return;
   }
 
-  async function setItem({ id, name, password }) {
+  async function setItem({ id, name, password }: { id: number; name: string; password: string }) {
     const CCtoken = axios.CancelToken.source();
     try {
       const { data } = await Api.setItem(id, { name, password }, CCtoken.token);
@@ -160,19 +185,20 @@ function Account() {
     }
   }
 
-  function readyToRemoveItem({ id_group, id }) {
+  function readyToRemoveItem({ id }: { id: number }) {
     setModalActive(true);
 
     modalDetail.current = {
+      ...modalDetail.current,
       message: 'Are you sure to Delete "item" ?',
       confirmType: "danger",
       confirm: () => {
-        removeItem({ id_group, id });
+        removeItem({ id });
       },
     };
   }
 
-  async function removeItem({ id }) {
+  async function removeItem({ id }: { id: number }) {
     const CCtoken = axios.CancelToken.source();
     try {
       const { data } = await Api.removeItem(id, CCtoken.token);
@@ -187,14 +213,14 @@ function Account() {
     }
   }
 
-  function setItemSetStatus(methods = { setStatus: itemSetStatus.current.old }) {
+  function setItemSetStatus(methods = { setStatus: itemSetStatus.current.old, cancelEdit: () => {} }) {
     itemSetStatus.current = { ...itemSetStatus.current, isUpdate: true, new: methods.setStatus, cancelEdit: methods.cancelEdit };
   }
 
-  function itemActiveHandler(e) {
-    const target = e.target.closest("[data-target=form-item]");
+  function itemActiveHandler(e: MouseEvent) {
+    const target = (e.target as HTMLDivElement).closest("[data-target=form-item]");
 
-    if (activeItem.current !== null && target !== activeItem.current) {
+    if (activeItem.current !== null && target !== activeItem.current && itemSetStatus.current.cancelEdit) {
       itemSetStatus.current.old && itemSetStatus.current.old("normal");
       itemSetStatus.current.cancelEdit();
     }
@@ -206,8 +232,8 @@ function Account() {
     }
   }
 
-  function cardSelectedHandler(e) {
-    const target = e.target.closest("[data-target=form-card]");
+  function cardSelectedHandler(e: MouseEvent) {
+    const target = (e.target as HTMLDivElement).closest("[data-target=form-card]");
     !target && setSelectedCard(null);
   }
 
@@ -278,7 +304,7 @@ function Account() {
               isFlash={dragStatus === DragStatusEnum.normal}
               data-target="form-card"
               selected={el.id === selectedCard}
-              key={el.id}
+              key={el.id as number}
               onClick={() => setSelectedCard(el.id)}
             >
               <FormItemGroupName
@@ -302,7 +328,7 @@ function Account() {
                   />
                 );
               })}
-              <FormItem id={`add-${key}`} id_group={el.id} statusForce="add" addItem={addItem} />
+              <FormItem id={`add-${key}`} id_group={el.id} statusForce={ItemStatusEnum.add} addItem={addItem} />
             </Card>
           );
         })}

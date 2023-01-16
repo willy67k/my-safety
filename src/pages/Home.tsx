@@ -3,6 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import Api from "../resource/api";
+import { FormUser } from "../type/form";
+
+type InputProps = {
+  autocomplete?: string;
+  value: string;
+};
 
 const Form = styled.form`
   display: flex;
@@ -32,7 +38,7 @@ const Icon = styled.span`
   border-bottom-left-radius: 4px;
 `;
 
-const Input = styled.input`
+const Input = styled.input<InputProps>`
   flex-grow: 1;
   margin-bottom: 16px;
   padding: 16px;
@@ -74,37 +80,43 @@ const MSG = styled.p`
 `;
 
 function Home() {
-  const form = useRef(null);
-  const [values, setValues] = useState({
+  const form = useRef<HTMLFormElement>(null);
+  const [values, setValues] = useState<FormUser>({
     username: "",
     password: "",
   });
   const navigate = useNavigate();
-  const [errorMsg, setErrorMsg] = useState(null);
+  const [errorMsg, setErrorMsg] = useState<string>("");
 
-  function setForm(e) {
+  function setForm(e: React.FormEvent<HTMLInputElement>) {
     setValues((prev) => {
       const newVal = { ...prev };
-      newVal[e.target.name] = e.target.value;
+      const target = e.target as HTMLInputElement;
+      const keyName = target.name;
+      if (keyName === "username" || keyName === "password") {
+        newVal[keyName] = target.value;
+      }
       return newVal;
     });
   }
 
-  async function login({ username, password }) {
+  async function login({ username, password }: FormUser) {
     const CCtoken = axios.CancelToken.source();
-    setErrorMsg(null);
+    setErrorMsg("");
     try {
       await Api.login({ username, password }, CCtoken.token);
       navigate("/account");
     } catch (err) {
-      setErrorMsg(err.response.data.error);
+      if (axios.isAxiosError(err) && err.response) {
+        setErrorMsg(err.response.data.error);
+      }
       console.log(err);
     }
     return;
   }
 
   useEffect(() => {
-    form.current.style.height = window.innerHeight + "px";
+    form.current!.style.height = window.innerHeight + "px";
   }, []);
 
   return (

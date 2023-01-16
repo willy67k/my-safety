@@ -1,12 +1,35 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
+import ColorEnum from "../enum/color";
 import DragStatusEnum from "../enum/dragStatus";
 import DragTypeEnum from "../enum/dragType";
+import ItemStatusEnum from "../enum/itemStatus";
+import { RootState } from "../store";
 import { setTargetItem, setStatus as setDragStatus, setType } from "../store/slice/dragSlice";
 import DragDots from "./icons/DragDots";
 
-const Order = styled.div`
+interface FormItemProps {
+  id_group: number;
+  id: number | string;
+  name?: string;
+  password?: string;
+  statusForce?: ItemStatusEnum;
+  setItem?: Function;
+  addItem?: Function;
+  readyToRemoveItem?: Function;
+  setItemSetStatus?: Function;
+}
+
+interface FormItemGroupProps {
+  id: number;
+  name: string;
+  setGroup: Function;
+  setItemSetStatus?: Function;
+  readyToRemoveGroup?: Function;
+}
+
+const Order = styled.div<{ status: string; onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void }>`
   position: absolute;
   top: 50%;
   left: -11px;
@@ -14,10 +37,10 @@ const Order = styled.div`
   transition: 0.3s;
   transform: translateY(-50%);
   opacity: 0;
-  cursor: ${(props) => props.status !== "add" && "grab"};
+  cursor: ${(props) => props.status !== ItemStatusEnum.add && ItemStatusEnum.grab};
 `;
 
-const Item = styled.div`
+const Item = styled.div<{ status?: string; isFlash?: boolean }>`
   position: relative;
   display: flex;
   padding: 8px 0;
@@ -29,7 +52,7 @@ const Item = styled.div`
   }
 
   &:hover ${Order} {
-    opacity: ${(props) => (props.status === "add" ? 0 : 1)};
+    opacity: ${(props) => (props.status === ItemStatusEnum.add ? 0 : 1)};
   }
 `;
 
@@ -38,7 +61,7 @@ const ItemGroupName = styled(Item)`
   border: none;
 `;
 
-const Input = styled.input`
+const Input = styled.input<{ active: boolean }>`
   margin-right: 16px;
   padding: 4px 8px 2px;
   background-color: transparent;
@@ -67,7 +90,7 @@ const InputPass = styled(Input)`
   color: rgba(255, 255, 255, 0.4);
 `;
 
-const Tools = styled.div`
+const Tools = styled.div<{ status: ItemStatusEnum }>`
   flex-grow: 1;
   flex-shrink: 0;
   display: flex;
@@ -77,18 +100,18 @@ const Tools = styled.div`
 
   ${(props) => {
     switch (props.status) {
-      case "normal":
+      case ItemStatusEnum.normal:
         return `
           width: 0px;
           opacity: 0;
           pointer-events: none;
           flex-grow: 0;
         `;
-      case "focus":
+      case ItemStatusEnum.focus:
         return "width: 83px;";
-      case "edit":
+      case ItemStatusEnum.edit:
         return "width: 79px;";
-      case "add":
+      case ItemStatusEnum.add:
         return "width: 35px;";
       default:
         break;
@@ -96,13 +119,23 @@ const Tools = styled.div`
   }}
 `;
 
-const ToolBtn = styled.button`
-  color: ${(props) => (props.color === "danger" ? "rgba(229, 127, 127, 1)" : props.color === "confirm" ? "#6AF190" : "#ffffff")};
+const ToolBtn = styled.button<{ color?: ColorEnum; active: boolean }>`
   font-size: 12px;
   margin-left: 0;
   width: 0;
   opacity: 0;
   pointer-events: none;
+
+  color: ${(props) => {
+    switch (props.color) {
+      case ColorEnum.danger:
+        return "rgba(229, 127, 127, 1)";
+      case ColorEnum.confirm:
+        return "#6AF190";
+      default:
+        return "#ffffff";
+    }
+  }};
 
   ${(props) => {
     if (props.active)
@@ -116,26 +149,27 @@ const ToolBtn = styled.button`
   }}
 `;
 
-const FormItem = React.memo((props) => {
+const FormItem = React.memo((props: FormItemProps) => {
   const { id_group, id, name = "", password = "", statusForce, setItem, addItem, readyToRemoveItem, setItemSetStatus } = props;
-  const [status, setStatus] = useState(statusForce || "normal");
+  const [status, setStatus] = useState<ItemStatusEnum>(statusForce || ItemStatusEnum.normal);
 
-  const [itemName, setItemName] = useState(name);
-  const [itemPassword, setItemPassword] = useState(password);
+  const [itemName, setItemName] = useState<string>(name);
+  const [itemPassword, setItemPassword] = useState<string>(password);
 
   const dispatch = useDispatch();
-  const dragStatus = useSelector((state) => state.drag.status);
+  const dragStatus = useSelector((state: RootState) => state.drag.status);
 
   function cancelEdit() {
     setItemName(name);
     setItemPassword(password);
   }
 
-  function setDragData(e) {
-    if (e.target.closest("button")?.getAttribute("color") === "confirm") return;
+  function setDragData(e: React.MouseEvent<HTMLDivElement>) {
+    const target = e.target as HTMLDivElement;
+    if (target.closest("button")?.getAttribute("color") === "confirm") return;
     dispatch(setType(DragTypeEnum.item));
 
-    e.target.closest("[data-target=form-item]")?.id.includes("add")
+    target.closest("[data-target=form-item]")?.id.includes("add")
       ? dispatch(setDragStatus(DragStatusEnum.normal))
       : dispatch(setDragStatus(DragStatusEnum.dragging));
 
@@ -149,9 +183,9 @@ const FormItem = React.memo((props) => {
       isFlash={dragStatus === DragStatusEnum.normal}
       data-target="form-item"
       onClick={() => {
-        if (status === "normal") {
-          setStatus("focus");
-          setItemSetStatus({ setStatus, cancelEdit });
+        if (status === ItemStatusEnum.normal) {
+          setStatus(ItemStatusEnum.focus);
+          setItemSetStatus && setItemSetStatus({ setStatus, cancelEdit });
         }
       }}
     >
@@ -159,54 +193,54 @@ const FormItem = React.memo((props) => {
         <DragDots />
       </Order>
       <InputAddress
-        active={status === "edit" || status === "add"}
+        active={status === ItemStatusEnum.edit || status === ItemStatusEnum.add}
         value={itemName}
-        readOnly={status !== "edit" && status !== "add"}
+        readOnly={status !== ItemStatusEnum.edit && status !== ItemStatusEnum.add}
         onInput={(e) => {
-          setItemName(e.target.value);
+          setItemName((e.target as HTMLInputElement).value);
         }}
       />
       <InputPass
-        active={status === "edit" || status === "add"}
+        active={status === ItemStatusEnum.edit || status === ItemStatusEnum.add}
         value={itemPassword}
-        readOnly={status !== "edit" && status !== "add"}
+        readOnly={status !== ItemStatusEnum.edit && status !== ItemStatusEnum.add}
         onInput={(e) => {
-          setItemPassword(e.target.value);
+          setItemPassword((e.target as HTMLInputElement).value);
         }}
       />
       <Tools status={status}>
-        <ToolBtn active={status === "focus"} onClick={() => setStatus("edit")}>
+        <ToolBtn active={status === ItemStatusEnum.focus} onClick={() => setStatus(ItemStatusEnum.edit)}>
           Edit
         </ToolBtn>
-        <ToolBtn active={status === "focus"} color="danger" onClick={() => readyToRemoveItem({ id_group, id })}>
+        <ToolBtn active={status === ItemStatusEnum.focus} color={ColorEnum.danger} onClick={() => readyToRemoveItem && readyToRemoveItem({ id_group, id })}>
           Delete
         </ToolBtn>
         <ToolBtn
-          active={status === "edit"}
-          color="confirm"
+          active={status === ItemStatusEnum.edit}
+          color={ColorEnum.confirm}
           onClick={() => {
-            setStatus("normal");
-            setItem({ id, name: itemName, password: itemPassword });
-            setItemSetStatus({ cancelEdit: () => {} });
+            setStatus(ItemStatusEnum.normal);
+            setItem && setItem({ id, name: itemName, password: itemPassword });
+            setItemSetStatus && setItemSetStatus({ cancelEdit: () => {} });
           }}
         >
           OK
         </ToolBtn>
         <ToolBtn
-          active={status === "edit"}
-          color="danger"
+          active={status === ItemStatusEnum.edit}
+          color={ColorEnum.danger}
           onClick={() => {
-            setStatus("normal");
+            setStatus(ItemStatusEnum.normal);
             cancelEdit();
           }}
         >
           Cancel
         </ToolBtn>
         <ToolBtn
-          active={status === "add"}
-          color="confirm"
+          active={status === ItemStatusEnum.add}
+          color={ColorEnum.confirm}
           onClick={() => {
-            if (itemName.length < 1 || itemPassword.length < 1) return;
+            if (itemName.length < 1 || itemPassword.length < 1 || !addItem) return;
             addItem({ id_group, name: itemName, password: itemPassword });
             setItemName("");
             setItemPassword("");
@@ -219,9 +253,9 @@ const FormItem = React.memo((props) => {
   );
 });
 
-const FormItemGroupName = React.memo((props) => {
+const FormItemGroupName = React.memo((props: FormItemGroupProps) => {
   const { id, name, setGroup, setItemSetStatus, readyToRemoveGroup } = props;
-  const [status, setStatus] = useState("normal");
+  const [status, setStatus] = useState(ItemStatusEnum.normal);
 
   const dispatch = useDispatch();
 
@@ -241,9 +275,9 @@ const FormItemGroupName = React.memo((props) => {
     <ItemGroupName
       data-target="form-item"
       onClick={() => {
-        if (status === "normal") {
-          setStatus("focus");
-          setItemSetStatus({ setStatus, cancelEdit });
+        if (status === ItemStatusEnum.normal) {
+          setStatus(ItemStatusEnum.focus);
+          setItemSetStatus && setItemSetStatus({ setStatus, cancelEdit });
         }
       }}
     >
@@ -251,42 +285,42 @@ const FormItemGroupName = React.memo((props) => {
         <DragDots />
       </Order>
       <InputGroupName
-        active={status === "edit"}
+        active={status === ItemStatusEnum.edit}
         value={groupName}
-        readOnly={status !== "edit"}
+        readOnly={status !== ItemStatusEnum.edit}
         onInput={(e) => {
-          setGroupName(e.target.value);
+          setGroupName((e.target as HTMLInputElement).value);
         }}
       />
       <Tools status={status}>
-        <ToolBtn active={status === "focus"} onClick={() => setStatus("edit")}>
+        <ToolBtn active={status === ItemStatusEnum.focus} onClick={() => setStatus(ItemStatusEnum.edit)}>
           Edit
         </ToolBtn>
         <ToolBtn
-          active={status === "focus"}
-          color="danger"
+          active={status === ItemStatusEnum.focus}
+          color={ColorEnum.danger}
           onClick={() => {
-            readyToRemoveGroup({ id });
+            readyToRemoveGroup && readyToRemoveGroup({ id });
           }}
         >
           Delete
         </ToolBtn>
         <ToolBtn
-          active={status === "edit"}
-          color="confirm"
+          active={status === ItemStatusEnum.edit}
+          color={ColorEnum.confirm}
           onClick={() => {
-            setStatus("normal");
+            setStatus(ItemStatusEnum.normal);
             setGroup({ id, name: groupName });
-            setItemSetStatus({ cancelEdit: () => {} });
+            setItemSetStatus && setItemSetStatus({ cancelEdit: () => {} });
           }}
         >
           OK
         </ToolBtn>
         <ToolBtn
-          active={status === "edit"}
-          color="danger"
+          active={status === ItemStatusEnum.edit}
+          color={ColorEnum.danger}
           onClick={() => {
-            setStatus("normal");
+            setStatus(ItemStatusEnum.normal);
             cancelEdit();
           }}
         >

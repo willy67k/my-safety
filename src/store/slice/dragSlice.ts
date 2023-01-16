@@ -1,7 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
 import DragStatusEnum from "../../enum/dragStatus";
+import { DragState } from "../../type/store";
 
-const initialState = {
+const initialState: DragState = {
   status: DragStatusEnum.normal,
   type: null,
   cardId: null,
